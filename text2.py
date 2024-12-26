@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+from fpdf import FPDF
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -68,3 +69,37 @@ if query_name:
         st.plotly_chart(fig)
     else:
         st.write("没有足够的记录来绘制图表。")
+
+    # 添加生成PDF按钮
+    if st.button('生成PDF'):
+        pdf = FPDF()
+        pdf.add_page()
+        
+        # 添加标题
+        pdf.set_font("Arial", size=12)
+        pdf.cell(200, 10, txt="科研人员信用风险预警查询", ln=True, align="C")
+        
+        # 添加表格1内容
+        pdf.set_font("Arial", size=10)
+        if not result_new2_2.empty:
+            pdf.cell(200, 10, txt="查询结果 (new2.2):", ln=True)
+            for index, row in result_new2_2.iterrows():
+                pdf.cell(200, 10, txt=f"作者: {row['作者']}, 失信指数: {row['失信指数']}", ln=True)
+        
+        # 添加表格2内容
+        if not result_new2_1.empty:
+            pdf.cell(200, 10, txt="查询结果 (new2.1):", ln=True)
+            for index, row in result_new2_1.iterrows():
+                pdf.cell(200, 10, txt=", ".join([f"{col}: {row[col]}" for col in columns_to_display]), ln=True)
+        
+        # 保存PDF文件
+        pdf_output = "查询结果.pdf"
+        pdf.output(pdf_output)
+        
+        with open(pdf_output, "rb") as file:
+            btn = st.download_button(
+                label="下载PDF文件",
+                data=file,
+                file_name=pdf_output,
+                mime="application/octet-stream"
+            )
