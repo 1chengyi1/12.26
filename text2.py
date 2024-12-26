@@ -7,6 +7,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 import os
 from io import BytesIO
+import xlsxwriter  # 确保导入了 xlsxwriter 库
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -50,7 +51,6 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
 
     c.save()
 
-
 def generate_excel(df1, df2):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -91,22 +91,23 @@ if query_name:
         for index, row in result_new2_2.iterrows():
             if float(row['失信指数']) > 100:
                 result_new2_2.at[index, '失信指数'] = f'<span class="highlight">{row["失信指数"]}</span>'
-        
+
         html_table1 = result_new2_2.to_html(index=False, escape=False, classes='dataframe')
         st.markdown(html_table1, unsafe_allow_html=True)
 
-    
     # 生成表格2，不显示行索引和作者列
     if not result_new2_1.empty:
         columns_to_display = [col for col in result_new2_1.columns if col != '作者']
         html_table2 = result_new2_1[columns_to_display].to_html(index=False, classes='dataframe')
         st.markdown(html_table2, unsafe_allow_html=True)
-    
     else:
         st.write("暂时没有相关记录。")
-    
+
     # 添加Excel下载按钮
     if not result_new2_2.empty or not result_new2_1.empty:
+        st.write("生成Excel文件")
+        st.write(result_new2_2)
+        st.write(result_new2_1)
         excel_data = generate_excel(result_new2_2, result_new2_1)
         st.download_button(
             label="下载Excel文件",
@@ -114,7 +115,7 @@ if query_name:
             file_name='查询结果.xlsx',
             mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
-    
+
     # 绘制失信指数前5人的折线图
     top_5 = df_new2_2.nlargest(5, '失信指数')
     if not top_5.empty:
