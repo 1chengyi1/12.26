@@ -48,3 +48,4 @@ plotly
 reportlab
 Pillow
 numpy
+pdfkit
