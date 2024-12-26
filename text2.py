@@ -102,16 +102,3 @@ if query_name:
         st.plotly_chart(fig)
     else:
         st.write("没有足够的记录来绘制图表。")
-
-    # 添加生成PDF按钮
-    if st.button('生成PDF'):
-        pdf_output = "查询结果.pdf"
-        save_pdf(result_new2_2, result_new2_1, pdf_output)
-        
-        with open(pdf_output, "rb") as file:
-            btn = st.download_button(
-                label="下载PDF文件",
-                data=file,
-                file_name=pdf_output,
-                mime="application/octet-stream"
-            )
