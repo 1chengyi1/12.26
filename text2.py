@@ -6,8 +6,6 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 import os
-from io import BytesIO
-import re  # 导入正则表达式库
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -51,27 +49,11 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
 
     c.save()
 
-def clean_shixin_index(df):
-    # 只保留"失信指数"列中的数字
-    df['失信指数'] = df['失信指数'].astype(str).apply(lambda x: re.sub(r'\D', '', x))
-    return df
-
-def generate_excel(df1, df2):
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df1.to_excel(writer, sheet_name='new2.2', index=False)
-        df2.to_excel(writer, sheet_name='new2.1', index=False)
-    return output.getvalue()
-
 if query_name:
     # 在new2.2表中寻找作者等于查询输入的名字
     result_new2_2 = df_new2_2[df_new2_2['作者'] == query_name]
     # 在new2.1表中寻找作者等于查询输入的名字
     result_new2_1 = df_new2_1[df_new2_1['作者'] == query_name]
-
-    # 清理失信指数列数据
-    if not result_new2_2.empty:
-        result_new2_2 = clean_shixin_index(result_new2_2)
 
     # 生成表格1，不显示行索引
     if not result_new2_2.empty:
@@ -103,7 +85,7 @@ if query_name:
         
         html_table1 = result_new2_2.to_html(index=False, escape=False, classes='dataframe')
         st.markdown(html_table1, unsafe_allow_html=True)
-
+    
     # 生成表格2，不显示行索引和作者列
     if not result_new2_1.empty:
         columns_to_display = [col for col in result_new2_1.columns if col != '作者']
@@ -111,17 +93,6 @@ if query_name:
         st.markdown(html_table2, unsafe_allow_html=True)
     else:
         st.write("暂时没有相关记录。")
-
-    # 添加Excel下载按钮
-    if not result_new2_2.empty or not result_new2_1.empty:
-        excel_data = generate_excel(result_new2_2, result_new2_1)
-        st.download_button(
-            label="下载Excel文件",
-            data=excel_data,
-            file_name='查询结果.xlsx',
-            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        )
-
     # 绘制失信指数前5人的折线图
     top_5 = df_new2_2.nlargest(5, '失信指数')
     if not top_5.empty:
