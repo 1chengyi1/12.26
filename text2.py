@@ -3,8 +3,9 @@ import pandas as pd
 import plotly.express as px
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from PIL import Image, ImageDraw, ImageFont
-import numpy as np
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+import os
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -19,47 +20,34 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
     c = canvas.Canvas(pdf_output, pagesize=letter)
     width, height = letter
 
-    # 确保width和height为整数
-    width, height = int(width), int(height)
-
-    # 创建一个空白的PIL图像，用于绘制文字（这里使用RGB模式，背景白色）
-    img = Image.new('RGB', (width, height), (255, 255, 255))
-    draw = ImageDraw.Draw(img)
-
-    # 设置字体（这里以Arial为例，需根据实际情况调整字体路径和名称）
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"  # 替换为系统中存在的字体路径
-    try:
-        font = ImageFont.truetype(font_path, 12)
-    except IOError:
-        st.error("Font file not found. Please provide a valid font path.")
+    # 确保字体文件存在并加载字体
+    font_path = os.path.join(os.path.dirname(__file__), 'DejaVuSans.ttf')
+    if os.path.exists(font_path):
+        pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
+    else:
+        st.error(f"Font file not found: {font_path}")
         return
 
-    # 使用PIL绘制标题文字
-    draw.text((100, height - 40), "科研人员信用风险预警查询", font=font, fill=(0, 0, 0))
+    c.setFont("DejaVuSans", 12)
+    c.drawString(100, height - 40, "科研人员信用风险预警查询")
 
     # 添加表格1内容
-    font = ImageFont.truetype(font_path, 10)
+    c.setFont("DejaVuSans", 10)
     if not result_new2_2.empty:
-        draw.text((100, height - 60), "查询结果 (new2.2):", font=font, fill=(0, 0, 0))
+        c.drawString(100, height - 60, "查询结果 (new2.2):")
         y = height - 80
         for index, row in result_new2_2.iterrows():
-            draw.text((100, y), f"作者: {row['作者']}, 失信指数: {row['失信指数']}", font=font, fill=(0, 0, 0))
+            c.drawString(100, y, f"作者: {row['作者']}, 失信指数: {row['失信指数']}")
             y -= 20
 
     # 添加表格2内容
     if not result_new2_1.empty:
-        draw.text((100, y - 20), "查询结果 (new2.1):", font=font, fill=(0, 0, 0))
+        c.drawString(100, y - 20, "查询结果 (new2.1):")
         y -= 40
         for index, row in result_new2_1.iterrows():
-            draw.text((100, y), ", ".join([f"{col}: {row[col]}" for col in result_new2_1.columns if col!= '作者']), font=font, fill=(0, 0, 0))
+            c.drawString(100, y, ", ".join([f"{col}: {row[col]}" for col in result_new2_1.columns if col != '作者']))
             y -= 20
 
-    # 将PIL图像保存为临时文件
-    temp_img_path = "temp_image.png"
-    img.save(temp_img_path)
-
-    # 将临时文件绘制到PDF上
-    c.drawImage(temp_img_path, 0, 0, width, height)
     c.save()
 
 if query_name:
