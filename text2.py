@@ -3,8 +3,6 @@ import pandas as pd
 import plotly.express as px
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -19,14 +17,12 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
     c = canvas.Canvas(pdf_output, pagesize=letter)
     width, height = letter
 
-    # 添加字体
-    pdfmetrics.registerFont(TTFont('SimSun', 'SimSun.ttf'))
-
-    c.setFont("SimSun", 12)
+    # 使用内置字体
+    c.setFont("Helvetica", 12)
     c.drawString(100, height - 40, "科研人员信用风险预警查询")
 
     # 添加表格1内容
-    c.setFont("SimSun", 10)
+    c.setFont("Helvetica", 10)
     if not result_new2_2.empty:
         c.drawString(100, height - 60, "查询结果 (new2.2):")
         y = height - 80
@@ -70,12 +66,7 @@ if query_name:
         }
         .highlight {
             background-color: yellow;
-            animation: blink 1s infinite; /* 尝试的闪烁动画，但可能不起作用 */ 
         }
-        @keyframes blink {  
-                0%, 100% { background-color: yellow; }  
-                50% { background-color: transparent; } /* 由于Streamlit的限制，这可能不会按预期工作 */  
-        }  
         </style>  
         """, unsafe_allow_html=True)
         # 添加高亮类
