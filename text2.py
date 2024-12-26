@@ -1,126 +1,82 @@
-import streamlit as st  
-import mysql.connector  
-import pandas as pd  
-# 数据库配置信息  
-config = {  
-    'user': 'root',  
-    'password': '123456',  
-    'host': '192.168.56.1',  
-    'database': 'test',  
-    'raise_on_warnings': True  
-}  
-def get_db_connection():  
-    """建立数据库连接"""  
-    cnx = mysql.connector.connect(**config)  
-    return cnx  
-def fetch_authors_data(author):  
-    """从new2表获取作者相关数据（注意：这里我假设是new2表，因为您的代码中有这个）"""  
-    query = """  
-    SELECT DISTINCT  
-        作者,  
-        领域,  
-        失信指数,  
-        相关学者,  
-        研究机构  
-    FROM new2  
-    WHERE 作者 LIKE %s  
-    """  
-    Authors_like = f"%{author}%"  
-    cnx = get_db_connection()  
-    cursor = cnx.cursor(dictionary=True)  
-    cursor.execute(query, (Authors_like,))  
-    columns = [column[0] for column in cursor.description]  
-    data = cursor.fetchall()  
-    df = pd.DataFrame(data, columns=columns)
-    cursor.close()  
-    cnx.close()  
-    return df
-def fetch_withdrawn_papers_data(author):  
-    """从new1表获取撤稿论文相关数据"""  
-    query = """  
-    SELECT  
-        作者,  
-        撤稿论文名称,  
-        发表时间,  
-        撤稿时间,  
-        被引频次,  
-        撤稿原因  
-    FROM new1  
-    WHERE 作者 LIKE %s  
-    """  
-    Authors_like = f"%{author}%"  
-    cnx = get_db_connection()  
-    cursor = cnx.cursor(dictionary=True)  
-    cursor.execute(query, (Authors_like,))  
-    columns = [column[0] for column in cursor.description]  
-    data = cursor.fetchall()  
-    df = pd.DataFrame(data, columns=columns)  
-    cursor.close()  
-    cnx.close()  
-    return df
-def main(): 
-    st.title("查询") 
-    # 用户输入  
-    Authors = st.text_input("请输入作者姓名（部分或全部）进行搜索：")  
-    if Authors:  
-        authors_data = fetch_authors_data(Authors)  
-        withdrawn_papers_data = fetch_withdrawn_papers_data(Authors)  
-        withdrawn_papers_data = withdrawn_papers_data.drop(columns=['作者'])  
-        # 第一个表格：作者数据
-        html_table1 = """  
-        <style>  
-            table {  
-                width: 100%;  
-                border-collapse: collapse;  
-                font-family: Arial, sans-serif; /* 选择一个合适的字体 */  
-                font-size: 14px; /* 设置字体大小 */  
-                margin-top: 20px; /* 与上方内容的间距 */  
-            }  
-            th, td {  
-                border: 1px solid #ddd; /* 边框颜色 */  
-                padding: 12px; /* 单元格内边距 */  
-                text-align: left;  
-            }  
-            th {  
-                background-color: #f2f2f2; /* 表头背景色 */  
-                color: #333; /* 表头文字颜色 */  
-            }  
-            tr:nth-child(even) {  
-                background-color: #f9f9f9; /* 隔行变色 */  
-            }  
-            tr:hover {  
-                background-color: #f1f1f1; /* 鼠标悬停变色 */  
-            }
-            .highlight {  
-                background-color: yellow; /* 高亮背景色 */  
-                animation: blink 1s infinite; /* 尝试的闪烁动画，但可能不起作用 */  
-            }  
-            @keyframes blink {  
+import streamlit as st
+import pandas as pd
+from io import BytesIO
+from weasyprint import HTML
+
+# 设置页面标题
+st.title("科研人员信用风险预警查询")
+
+# 读取Excel文件
+df_new2_2 = pd.read_excel('new2.2.xlsx')
+df_new2_1 = pd.read_excel('new2.1.xlsx')
+
+query_name = st.text_input("请输入查询名字：")
+if query_name:
+    # 在new2.2表中寻找作者等于查询输入的名字
+    result_new2_2 = df_new2_2[df_new2_2['作者'] == query_name]
+    # 在new2.1表中寻找作者等于查询输入的名字
+    result_new2_1 = df_new2_1[df_new2_1['作者'] == query_name]
+
+    # 生成表格1，不显示行索引
+    if not result_new2_2.empty:
+        st.markdown("""
+        <style>
+       .dataframe {
+            border: 1px solid #ccc;
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+       .dataframe th,.dataframe td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+       .dataframe th {
+            background-color: #f2f2f2;
+        }
+       .highlight {
+            background-color: yellow;
+            animation: blink 1s infinite; /* 尝试的闪烁动画，但可能不起作用 */ 
+        }
+        @keyframes blink {  
                 0%, 100% { background-color: yellow; }  
                 50% { background-color: transparent; } /* 由于Streamlit的限制，这可能不会按预期工作 */  
-            }  
+        }  
         </style>  
-        <table>  
-            <tr>  
-                <th>姓名</th>  
-                <th>领域</th>  
-                <th>失信指数</th>   
-                <th>相关学者</th>  
-                <th>研究机构</th>  
-            </tr>  
-            """    
-        for index, row in authors_data.iterrows():  
-            highlight_class = 'highlight' if float(row['失信指数']) > 100 else ''  
-            html_table1 += f"<tr><td>{row['作者']}</td>"  
-            html_table1 += f"<td>{row['领域']}</td>"  
-            html_table1 += f"<td class='{highlight_class}'>{row['失信指数']}</td>"  
-            html_table1 += f"<td>{row['相关学者']}</td>"  
-            html_table1 += f"<td>{row['研究机构']}</td></tr>"  
-        html_table1 += "</table>"  
-        # 第二个表格：撤稿论文数据  
-        html_table2 = withdrawn_papers_data.to_html(index=False, classes='dataframe', header="true")  
-        # 显示表格  
-        st.write(html_table1, unsafe_allow_html=True)  
-        st.write(html_table2, unsafe_allow_html=True)  
-if __name__ == "__main__":  
-    main()
+        </style>
+        """, unsafe_allow_html=True)
+        # 添加高亮类
+        for index, row in result_new2_2.iterrows():
+            if float(row['失信指数']) > 100:
+                result_new2_2.at[index, '失信指数'] = f'<span class="highlight">{row["失信指数"]}</span>'
+        
+        html_table1 = result_new2_2.to_html(index=False, escape=False, classes='dataframe')
+        st.markdown(html_table1, unsafe_allow_html=True)
+    # 生成表格2，不显示行索引和作者列
+    if not result_new2_1.empty:
+        columns_to_display = [col for col in result_new2_1.columns if col!= '作者']
+        html_table2 = result_new2_1[columns_to_display].to_html(index=False, classes='dataframe')
+        st.markdown(html_table2, unsafe_allow_html=True)
+    else:
+        st.write("暂时没有相关记录。")
+
+    # 添加保存按钮功能，用于下载为PDF
+    if not (result_new2_2.empty and result_new2_1.empty):
+        if st.button("保存为PDF"):
+            # 创建一个BytesIO对象来临时存储PDF数据
+            pdf_buffer = BytesIO()
+            combined_html = ""
+            if not result_new2_2.empty:
+                combined_html += html_table1
+            if not result_new2_1.empty:
+                combined_html += html_table2
+            # 使用weasyprint将HTML转换为PDF并写入到BytesIO对象中
+            HTML(string=combined_html).write_pdf(pdf_buffer)
+            # 设置下载的文件名和类型
+            st.download_button(
+                label="点击下载PDF",
+                data=pdf_buffer.getvalue(),
+                file_name="科研人员信用信息.pdf",
+                mime="application/pdf"
+            )
