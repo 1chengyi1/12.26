@@ -43,4 +43,4 @@ urllib3==2.2.2
 watchdog==4.0.1
 openpyxl
 weasyprint
-matplotlib.pyplot==3.4.2
+matplotlib
