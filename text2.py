@@ -6,6 +6,7 @@ from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 import os
+from io import BytesIO
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -51,6 +52,13 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
 
 def generate_csv(df):
     return df.to_csv(index=False).encode('utf-8')
+
+def generate_excel(df1, df2):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df1.to_excel(writer, sheet_name='new2.2', index=False)
+        df2.to_excel(writer, sheet_name='new2.1', index=False)
+    return output.getvalue()
 
 if query_name:
     # 在new2.2表中寻找作者等于查询输入的名字
@@ -112,6 +120,17 @@ if query_name:
         )
     else:
         st.write("暂时没有相关记录。")
+    
+    # 添加Excel下载按钮
+    if not result_new2_2.empty or not result_new2_1.empty:
+        excel_data = generate_excel(result_new2_2, result_new2_1)
+        st.download_button(
+            label="下载Excel文件",
+            data=excel_data,
+            file_name='查询结果.xlsx',
+            mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+    
     # 绘制失信指数前5人的折线图
     top_5 = df_new2_2.nlargest(5, '失信指数')
     if not top_5.empty:
