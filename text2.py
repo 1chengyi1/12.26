@@ -7,7 +7,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 import os
 from io import BytesIO
-import xlsxwriter  # 确保导入了 xlsxwriter 库
+import re  # 导入正则表达式库
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -51,6 +51,11 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
 
     c.save()
 
+def clean_shixin_index(df):
+    # 只保留"失信指数"列中的数字
+    df['失信指数'] = df['失信指数'].astype(str).apply(lambda x: re.sub(r'\D', '', x))
+    return df
+
 def generate_excel(df1, df2):
     output = BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
@@ -63,6 +68,10 @@ if query_name:
     result_new2_2 = df_new2_2[df_new2_2['作者'] == query_name]
     # 在new2.1表中寻找作者等于查询输入的名字
     result_new2_1 = df_new2_1[df_new2_1['作者'] == query_name]
+
+    # 清理失信指数列数据
+    if not result_new2_2.empty:
+        result_new2_2 = clean_shixin_index(result_new2_2)
 
     # 生成表格1，不显示行索引
     if not result_new2_2.empty:
@@ -91,7 +100,7 @@ if query_name:
         for index, row in result_new2_2.iterrows():
             if float(row['失信指数']) > 100:
                 result_new2_2.at[index, '失信指数'] = f'<span class="highlight">{row["失信指数"]}</span>'
-
+        
         html_table1 = result_new2_2.to_html(index=False, escape=False, classes='dataframe')
         st.markdown(html_table1, unsafe_allow_html=True)
 
@@ -105,9 +114,6 @@ if query_name:
 
     # 添加Excel下载按钮
     if not result_new2_2.empty or not result_new2_1.empty:
-        st.write("生成Excel文件")
-        st.write(result_new2_2)
-        st.write(result_new2_1)
         excel_data = generate_excel(result_new2_2, result_new2_1)
         st.download_button(
             label="下载Excel文件",
