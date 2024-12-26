@@ -3,8 +3,9 @@ import pandas as pd
 import plotly.express as px
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from PIL import Image, ImageDraw, ImageFont
-import numpy as np
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -16,51 +17,40 @@ df_new2_1 = pd.read_excel('new2.1.xlsx')
 query_name = st.text_input("请输入查询名字：")
 
 def save_pdf(result_new2_2, result_new2_1, pdf_output):
-    c = canvas.Canvas(pdf_output, pagesize=letter)
-    width, height = letter
-
-    # 确保width和height为整数
-    width, height = int(width), int(height)
-
-    # 创建一个空白的PIL图像，用于绘制文字（这里使用RGB模式，背景白色）
-    img = Image.new('RGB', (width, height), (255, 255, 255))
-    draw = ImageDraw.Draw(img)
-
-    # 设置字体（这里以Arial为例，需根据实际情况调整字体路径和名称）
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"  # 替换为系统中存在的字体路径
-    try:
-        font = ImageFont.truetype(font_path, 12)
-    except IOError:
-        st.error("Font file not found. Please provide a valid font path.")
-        return
-
-    # 使用PIL绘制标题文字
-    draw.text((100, height - 40), "科研人员信用风险预警查询", font=font, fill=(0, 0, 0))
+    doc = SimpleDocTemplate(pdf_output, pagesize=A4)
+    elements = []
 
     # 添加表格1内容
-    font = ImageFont.truetype(font_path, 10)
     if not result_new2_2.empty:
-        draw.text((100, height - 60), "查询结果 (new2.2):", font=font, fill=(0, 0, 0))
-        y = height - 80
-        for index, row in result_new2_2.iterrows():
-            draw.text((100, y), f"作者: {row['作者']}, 失信指数: {row['失信指数']}", font=font, fill=(0, 0, 0))
-            y -= 20
+        data = [["作者", "失信指数"]] + result_new2_2.values.tolist()
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        elements.append(table)
 
     # 添加表格2内容
     if not result_new2_1.empty:
-        draw.text((100, y - 20), "查询结果 (new2.1):", font=font, fill=(0, 0, 0))
-        y -= 40
-        for index, row in result_new2_1.iterrows():
-            draw.text((100, y), ", ".join([f"{col}: {row[col]}" for col in result_new2_1.columns if col!= '作者']), font=font, fill=(0, 0, 0))
-            y -= 20
+        data = [result_new2_1.columns.tolist()] + result_new2_1.values.tolist()
+        table = Table(data)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
+        elements.append(table)
 
-    # 将PIL图像保存为临时文件
-    temp_img_path = "temp_image.png"
-    img.save(temp_img_path)
-
-    # 将临时文件绘制到PDF上
-    c.drawImage(temp_img_path, 0, 0, width, height)
-    c.save()
+    doc.build(elements)
 
 if query_name:
     # 在new2.2表中寻找作者等于查询输入的名字
