@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from fpdf import FPDF
+from fpdf2 import FPDF as FPDF2
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -72,15 +73,18 @@ if query_name:
 
     # 添加生成PDF按钮
     if st.button('生成PDF'):
-        pdf = FPDF()
+        pdf = FPDF2()
         pdf.add_page()
         
+        # 添加中文字体支持
+        pdf.add_font('SimSun', '', 'SimSun.ttf', uni=True)
+        pdf.set_font('SimSun', size=12)
+        
         # 添加标题
-        pdf.set_font("Arial", size=12)
         pdf.cell(200, 10, txt="科研人员信用风险预警查询", ln=True, align="C")
         
         # 添加表格1内容
-        pdf.set_font("Arial", size=10)
+        pdf.set_font('SimSun', size=10)
         if not result_new2_2.empty:
             pdf.cell(200, 10, txt="查询结果 (new2.2):", ln=True)
             for index, row in result_new2_2.iterrows():
