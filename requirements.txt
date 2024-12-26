@@ -44,3 +44,4 @@ watchdog==4.0.1
 openpyxl
 weasyprint
 matplotlib
+plotly
