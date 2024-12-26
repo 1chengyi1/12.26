@@ -49,3 +49,4 @@ reportlab
 Pillow
 numpy
 pdfkit
+wkhtmltopdf
