@@ -70,18 +70,11 @@ if query_name:
     if not top_5.empty:
         fig = px.line(top_5, x='作者', y='失信指数', title='失信指数前5人的折线图')
         st.plotly_chart(fig)
+        html_content += fig.to_html()  # 将图表添加到HTML内容中
     else:
         st.write("没有足够的记录来绘制图表。")
 
-    # 添加生成PDF按钮
-    if st.button('生成PDF'):
-        pdf_output = "查询结果.pdf"
-        save_pdf(html_content, pdf_output)
-        
-        with open(pdf_output, "rb") as file:
-            btn = st.download_button(
-                label="下载PDF文件",
-                data=file,
-                file_name=pdf_output,
-                mime="application/octet-stream"
-            )
+    # 添加保存PDF的按钮
+    if st.button("保存为PDF"):
+        save_pdf(html_content, "output.pdf")
+        st.success("PDF保存成功！")
