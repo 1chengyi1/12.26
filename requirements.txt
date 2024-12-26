@@ -46,3 +46,5 @@ weasyprint
 matplotlib
 plotly
 reportlab
+Pillow
+numpy
