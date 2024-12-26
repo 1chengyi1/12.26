@@ -20,19 +20,14 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
     c = canvas.Canvas(pdf_output, pagesize=letter)
     width, height = letter
 
-    # 确保字体文件存在并加载字体
-    font_path = os.path.join(os.path.dirname(__file__), 'DejaVuSans.ttf')
-    if os.path.exists(font_path):
-        pdfmetrics.registerFont(TTFont('DejaVuSans', font_path))
-    else:
-        st.error(f"Font file not found: {font_path}")
-        return
+    # 注册字体 Arial Unicode MS
+    pdfmetrics.registerFont(TTFont('ArialUnicode', 'Arial Unicode MS.ttf'))
 
-    c.setFont("DejaVuSans", 12)
+    c.setFont("ArialUnicode", 12)
     c.drawString(100, height - 40, "科研人员信用风险预警查询")
 
     # 添加表格1内容
-    c.setFont("DejaVuSans", 10)
+    c.setFont("ArialUnicode", 10)
     if not result_new2_2.empty:
         c.drawString(100, height - 60, "查询结果 (new2.2):")
         y = height - 80
