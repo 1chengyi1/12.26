@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.express as px
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -9,20 +9,7 @@ st.title("科研人员信用风险预警查询")
 df_new2_2 = pd.read_excel('new2.2.xlsx')
 df_new2_1 = pd.read_excel('new2.1.xlsx')
 
-# 获取失信指数前5的记录
-top_5 = df_new2_2.nlargest(5, '失信指数')
-
-# 输入查询名字
 query_name = st.text_input("请输入查询名字：")
-
-if not query_name:
-    # 绘制折线图
-    fig, ax = plt.subplots()
-    top_5.plot(kind='line', x='作者', y='失信指数', ax=ax, marker='o')
-    ax.set_title('失信指数前5的人')
-    ax.set_xlabel('作者')
-    ax.set_ylabel('失信指数')
-    st.pyplot(fig)
 
 if query_name:
     # 在new2.2表中寻找作者等于查询输入的名字
@@ -57,7 +44,6 @@ if query_name:
                 50% { background-color: transparent; } /* 由于Streamlit的限制，这可能不会按预期工作 */  
         }  
         </style>  
-        </style>
         """, unsafe_allow_html=True)
         # 添加高亮类
         for index, row in result_new2_2.iterrows():
@@ -74,3 +60,11 @@ if query_name:
         st.markdown(html_table2, unsafe_allow_html=True)
     else:
         st.write("暂时没有相关记录。")
+
+    # 绘制失信指数前5人的折线图
+    top_5 = df_new2_2.nlargest(5, '失信指数')
+    if not top_5.empty:
+        fig = px.line(top_5, x='作者', y='失信指数', title='失信指数前5人的折线图')
+        st.plotly_chart(fig)
+    else:
+        st.write("没有足够的记录来绘制图表。")
