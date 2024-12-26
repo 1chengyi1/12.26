@@ -1,11 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+import pdfkit
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -16,47 +12,17 @@ df_new2_1 = pd.read_excel('new2.1.xlsx')
 
 query_name = st.text_input("请输入查询名字：")
 
-def save_pdf(result_new2_2, result_new2_1, pdf_output):
-    doc = SimpleDocTemplate(pdf_output, pagesize=A4)
-    elements = []
-
-    # 添加表格1内容
-    if not result_new2_2.empty:
-        data = [["作者", "失信指数"]] + result_new2_2.values.tolist()
-        table = Table(data)
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        elements.append(table)
-
-    # 添加表格2内容
-    if not result_new2_1.empty:
-        data = [result_new2_1.columns.tolist()] + result_new2_1.values.tolist()
-        table = Table(data)
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-            ('GRID', (0, 0), (-1, -1), 1, colors.black)
-        ]))
-        elements.append(table)
-
-    doc.build(elements)
+def save_pdf(html_content, pdf_output):
+    # 使用pdfkit将HTML内容转换为PDF文件
+    pdfkit.from_string(html_content, pdf_output)
 
 if query_name:
     # 在new2.2表中寻找作者等于查询输入的名字
     result_new2_2 = df_new2_2[df_new2_2['作者'] == query_name]
     # 在new2.1表中寻找作者等于查询输入的名字
     result_new2_1 = df_new2_1[df_new2_1['作者'] == query_name]
+
+    html_content = ""
 
     # 生成表格1，不显示行索引
     if not result_new2_2.empty:
@@ -88,12 +54,14 @@ if query_name:
         
         html_table1 = result_new2_2.to_html(index=False, escape=False, classes='dataframe')
         st.markdown(html_table1, unsafe_allow_html=True)
+        html_content += html_table1
     
     # 生成表格2，不显示行索引和作者列
     if not result_new2_1.empty:
         columns_to_display = [col for col in result_new2_1.columns if col != '作者']
         html_table2 = result_new2_1[columns_to_display].to_html(index=False, classes='dataframe')
         st.markdown(html_table2, unsafe_allow_html=True)
+        html_content += html_table2
     else:
         st.write("暂时没有相关记录。")
 
@@ -108,7 +76,7 @@ if query_name:
     # 添加生成PDF按钮
     if st.button('生成PDF'):
         pdf_output = "查询结果.pdf"
-        save_pdf(result_new2_2, result_new2_1, pdf_output)
+        save_pdf(html_content, pdf_output)
         
         with open(pdf_output, "rb") as file:
             btn = st.download_button(
