@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -17,12 +19,14 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
     c = canvas.Canvas(pdf_output, pagesize=letter)
     width, height = letter
 
-    # 使用内置字体
-    c.setFont("Helvetica", 12)
+    # 添加字体
+    pdfmetrics.registerFont(TTFont('SimSun', 'path/to/SimSun.ttf'))  # 确保路径正确
+
+    c.setFont("SimSun", 12)
     c.drawString(100, height - 40, "科研人员信用风险预警查询")
 
     # 添加表格1内容
-    c.setFont("Helvetica", 10)
+    c.setFont("SimSun", 10)
     if not result_new2_2.empty:
         c.drawString(100, height - 60, "查询结果 (new2.2):")
         y = height - 80
