@@ -45,4 +45,4 @@ openpyxl
 weasyprint
 matplotlib
 plotly
-fpdf
+fpdf2
