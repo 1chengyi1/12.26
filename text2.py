@@ -20,14 +20,19 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
     c = canvas.Canvas(pdf_output, pagesize=letter)
     width, height = letter
 
-    # 注册字体 Arial Unicode MS
-    pdfmetrics.registerFont(TTFont('ArialUnicode', 'Arial Unicode MS.ttf'))
+    # 注册字体 SimSun
+    font_path = 'SimSun.ttf'
+    if os.path.exists(font_path):
+        pdfmetrics.registerFont(TTFont('SimSun', font_path))
+    else:
+        st.error(f"Font file not found: {font_path}")
+        return
 
-    c.setFont("ArialUnicode", 12)
+    c.setFont("SimSun", 12)
     c.drawString(100, height - 40, "科研人员信用风险预警查询")
 
     # 添加表格1内容
-    c.setFont("ArialUnicode", 10)
+    c.setFont("SimSun", 10)
     if not result_new2_2.empty:
         c.drawString(100, height - 60, "查询结果 (new2.2):")
         y = height - 80
