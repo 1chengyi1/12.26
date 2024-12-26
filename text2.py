@@ -1,8 +1,10 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from fpdf import FPDF
-from fpdf2 import FPDF as FPDF2
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -12,6 +14,35 @@ df_new2_2 = pd.read_excel('new2.2.xlsx')
 df_new2_1 = pd.read_excel('new2.1.xlsx')
 
 query_name = st.text_input("请输入查询名字：")
+
+def save_pdf(result_new2_2, result_new2_1, pdf_output):
+    c = canvas.Canvas(pdf_output, pagesize=letter)
+    width, height = letter
+
+    # 添加字体
+    pdfmetrics.registerFont(TTFont('SimSun', 'SimSun.ttf'))
+
+    c.setFont("SimSun", 12)
+    c.drawString(100, height - 40, "科研人员信用风险预警查询")
+
+    # 添加表格1内容
+    c.setFont("SimSun", 10)
+    if not result_new2_2.empty:
+        c.drawString(100, height - 60, "查询结果 (new2.2):")
+        y = height - 80
+        for index, row in result_new2_2.iterrows():
+            c.drawString(100, y, f"作者: {row['作者']}, 失信指数: {row['失信指数']}")
+            y -= 20
+
+    # 添加表格2内容
+    if not result_new2_1.empty:
+        c.drawString(100, y - 20, "查询结果 (new2.1):")
+        y -= 40
+        for index, row in result_new2_1.iterrows():
+            c.drawString(100, y, ", ".join([f"{col}: {row[col]}" for col in result_new2_1.columns if col != '作者']))
+            y -= 20
+
+    c.save()
 
 if query_name:
     # 在new2.2表中寻找作者等于查询输入的名字
@@ -73,32 +104,8 @@ if query_name:
 
     # 添加生成PDF按钮
     if st.button('生成PDF'):
-        pdf = FPDF2()
-        pdf.add_page()
-        
-        # 添加中文字体支持
-        pdf.add_font('SimSun', '', 'SimSun.ttf', uni=True)
-        pdf.set_font('SimSun', size=12)
-        
-        # 添加标题
-        pdf.cell(200, 10, txt="科研人员信用风险预警查询", ln=True, align="C")
-        
-        # 添加表格1内容
-        pdf.set_font('SimSun', size=10)
-        if not result_new2_2.empty:
-            pdf.cell(200, 10, txt="查询结果 (new2.2):", ln=True)
-            for index, row in result_new2_2.iterrows():
-                pdf.cell(200, 10, txt=f"作者: {row['作者']}, 失信指数: {row['失信指数']}", ln=True)
-        
-        # 添加表格2内容
-        if not result_new2_1.empty:
-            pdf.cell(200, 10, txt="查询结果 (new2.1):", ln=True)
-            for index, row in result_new2_1.iterrows():
-                pdf.cell(200, 10, txt=", ".join([f"{col}: {row[col]}" for col in columns_to_display]), ln=True)
-        
-        # 保存PDF文件
         pdf_output = "查询结果.pdf"
-        pdf.output(pdf_output)
+        save_pdf(result_new2_2, result_new2_1, pdf_output)
         
         with open(pdf_output, "rb") as file:
             btn = st.download_button(
