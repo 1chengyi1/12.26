@@ -9,13 +9,6 @@ import os
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
-# 绘制失信指数前5人的折线图
-top_5 = df_new2_2.nlargest(5, '失信指数')
-if not top_5.empty:
-    fig = px.line(top_5, x='作者', y='失信指数', title='失信指数前5人的折线图')
-    st.plotly_chart(fig)
-else:
-    st.write("没有足够的记录来绘制图表。")
 # 读取Excel文件
 df_new2_2 = pd.read_excel('new2.2.xlsx')
 df_new2_1 = pd.read_excel('new2.1.xlsx')
@@ -100,3 +93,10 @@ if query_name:
         st.markdown(html_table2, unsafe_allow_html=True)
     else:
         st.write("暂时没有相关记录。")
+    # 绘制失信指数前5人的折线图
+    top_5 = df_new2_2.nlargest(5, '失信指数')
+    if not top_5.empty:
+        fig = px.line(top_5, x='作者', y='失信指数', title='失信指数前5人的折线图')
+        st.plotly_chart(fig)
+    else:
+        st.write("没有足够的记录来绘制图表。")
