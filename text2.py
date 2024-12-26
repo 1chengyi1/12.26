@@ -9,6 +9,7 @@ import os
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
+
 # 读取Excel文件
 df_new2_2 = pd.read_excel('new2.2.xlsx')
 df_new2_1 = pd.read_excel('new2.1.xlsx')
@@ -55,6 +56,14 @@ if query_name:
     # 在new2.1表中寻找作者等于查询输入的名字
     result_new2_1 = df_new2_1[df_new2_1['作者'] == query_name]
 
+    # 整合两个数据表，用于绘制折线图
+    if not result_new2_2.empty and not result_new2_1.empty:
+        combined_df = pd.concat([result_new2_2, result_new2_1], ignore_index=True)
+        fig = px.line(combined_df, x='作者', y='失信指数', title='科研人员失信指数')
+        st.plotly_chart(fig)
+    else:
+        st.write("没有足够的记录来绘制图表。")
+    
     # 生成表格1，不显示行索引
     if not result_new2_2.empty:
         st.markdown("""
@@ -78,7 +87,6 @@ if query_name:
         }
         </style>  
         """, unsafe_allow_html=True)
-        # 添加高亮类
         for index, row in result_new2_2.iterrows():
             if float(row['失信指数']) > 100:
                 result_new2_2.at[index, '失信指数'] = f'<span class="highlight">{row["失信指数"]}</span>'
@@ -93,10 +101,16 @@ if query_name:
         st.markdown(html_table2, unsafe_allow_html=True)
     else:
         st.write("暂时没有相关记录。")
-    # 绘制失信指数前5人的折线图
-    top_5 = df_new2_2.nlargest(5, '失信指数')
-    if not top_5.empty:
-        fig = px.line(top_5, x='作者', y='失信指数', title='失信指数前5人的折线图')
-        st.plotly_chart(fig)
-    else:
-        st.write("没有足够的记录来绘制图表。")
+
+    # 添加生成PDF按钮
+    if st.button('生成PDF'):
+        pdf_output = "查询结果.pdf"
+        save_pdf(result_new2_2, result_new2_1, pdf_output)
+        
+        with open(pdf_output, "rb") as file:
+            st.download_button(
+                label="下载PDF文件",
+                data=file,
+                file_name=pdf_output,
+                mime="application/octet-stream"
+            )
