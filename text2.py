@@ -19,6 +19,9 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
     c = canvas.Canvas(pdf_output, pagesize=letter)
     width, height = letter
 
+    # 确保width和height为整数
+    width, height = int(width), int(height)
+
     # 创建一个空白的PIL图像，用于绘制文字（这里使用RGB模式，背景白色）
     img = Image.new('RGB', (width, height), (255, 255, 255))
     draw = ImageDraw.Draw(img)
