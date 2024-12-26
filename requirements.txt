@@ -50,3 +50,4 @@ Pillow
 numpy
 pdfkit
 wkhtmltopdf
+xlsxwriter
