@@ -50,8 +50,6 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
 
     c.save()
 
-def generate_csv(df):
-    return df.to_csv(index=False).encode('utf-8')
 
 def generate_excel(df1, df2):
     output = BytesIO()
@@ -96,28 +94,14 @@ if query_name:
         
         html_table1 = result_new2_2.to_html(index=False, escape=False, classes='dataframe')
         st.markdown(html_table1, unsafe_allow_html=True)
-        # 添加下载按钮
-        csv_result_new2_2 = generate_csv(result_new2_2)
-        st.download_button(
-            label="下载表格 (new2.2)",
-            data=csv_result_new2_2,
-            file_name='result_new2_2.csv',
-            mime='text/csv',
-        )
+
     
     # 生成表格2，不显示行索引和作者列
     if not result_new2_1.empty:
         columns_to_display = [col for col in result_new2_1.columns if col != '作者']
         html_table2 = result_new2_1[columns_to_display].to_html(index=False, classes='dataframe')
         st.markdown(html_table2, unsafe_allow_html=True)
-        # 添加下载按钮
-        csv_result_new2_1 = generate_csv(result_new2_1[columns_to_display])
-        st.download_button(
-            label="下载表格 (new2.1)",
-            data=csv_result_new2_1,
-            file_name='result_new2_1.csv',
-            mime='text/csv',
-        )
+    
     else:
         st.write("暂时没有相关记录。")
     
