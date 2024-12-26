@@ -5,6 +5,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+import os
 
 # 设置页面标题
 st.title("科研人员信用风险预警查询")
@@ -19,8 +20,13 @@ def save_pdf(result_new2_2, result_new2_1, pdf_output):
     c = canvas.Canvas(pdf_output, pagesize=letter)
     width, height = letter
 
-    # 添加字体
-    pdfmetrics.registerFont(TTFont('SimSun', 'path/to/SimSun.ttf'))  # 确保路径正确
+    # 确保字体文件存在并加载字体
+    font_path = os.path.join(os.path.dirname(__file__), 'SimSun.ttf')
+    if os.path.exists(font_path):
+        pdfmetrics.registerFont(TTFont('SimSun', font_path))
+    else:
+        st.error(f"Font file not found: {font_path}")
+        return
 
     c.setFont("SimSun", 12)
     c.drawString(100, height - 40, "科研人员信用风险预警查询")
