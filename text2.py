@@ -12,9 +12,12 @@ df_new2_1 = pd.read_excel('new2.1.xlsx')
 
 query_name = st.text_input("请输入查询名字：")
 
+# 指定wkhtmltopdf的路径
+config = pdfkit.configuration(wkhtmltopdf='/usr/local/bin/wkhtmltopdf')
+
 def save_pdf(html_content, pdf_output):
     # 使用pdfkit将HTML内容转换为PDF文件
-    pdfkit.from_string(html_content, pdf_output)
+    pdfkit.from_string(html_content, pdf_output, configuration=config)
 
 if query_name:
     # 在new2.2表中寻找作者等于查询输入的名字
